@@ -14,6 +14,7 @@ import {
   EyeSlashIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
+import axios from "axios";
 
 const RegisterPage: React.FC = () => {
   const { user, isLoading, register } = useAuth();
@@ -63,11 +64,15 @@ const RegisterPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await register(
-        formData.email,
-        formData.password,
-        formData.full_name,
-        formData.phone
+      const data = {
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.full_name,
+        phone: formData.phone,
+      };
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`,
+        data
       );
       toast.success("Đăng ký thành công!");
     } catch (error: any) {

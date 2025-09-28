@@ -96,9 +96,9 @@ app = FastAPI(
 # Add middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -128,12 +128,12 @@ async def log_requests(request: Request, call_next):
     return response
 
 # Include routers
-app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(health.router)
 app.include_router(medications.router)
 app.include_router(schedules.router)
 app.include_router(chat.router)
+app.include_router(auth.router, prefix="/api/auth")
 
 # Root endpoint
 @app.get("/", tags=["root"])

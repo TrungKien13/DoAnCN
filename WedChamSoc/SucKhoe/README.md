@@ -112,7 +112,7 @@ pip install -r requirements_simple.txt
 python main.py
 ```
 
-**Backend sẽ chạy tại:** `http://localhost:8001`
+**Backend sẽ chạy tại:** `http://localhost:8000`
 
 ### 4. **Cài Đặt Frontend**
 

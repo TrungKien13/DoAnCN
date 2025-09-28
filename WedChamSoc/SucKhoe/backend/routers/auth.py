@@ -16,7 +16,7 @@ from models.user import User, GenderEnum
 logger = logging.getLogger(__name__)
 
 # Create router
-router = APIRouter(prefix="/api/auth", tags=["authentication"])
+router = APIRouter(tags=["authentication"])
 
 # Pydantic models
 class UserRegister(BaseModel):
@@ -49,7 +49,7 @@ class UserResponse(BaseModel):
     email_verified: bool
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
-async def register(
+def register(
     user_data: UserRegister,
     db: Session = Depends(get_database)
 ):

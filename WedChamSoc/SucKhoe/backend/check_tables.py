@@ -7,7 +7,7 @@ from decouple import config
 
 # Database configuration
 DB_HOST = config('DB_HOST', default='localhost')
-DB_PORT = config('DB_PORT', default=3307, cast=int)
+DB_PORT = config('DB_PORT', default=3306, cast=int)
 DB_USER = config('DB_USER', default='root')
 DB_PASSWORD = config('DB_PASSWORD', default='Haiduong27@')
 DB_NAME = config('DB_NAME', default='elderly_health_db')
