@@ -3,6 +3,6 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/auth/login": "pages/auth/login.js",
-  "/health": "pages/health.js"
+  "/settings": "pages/settings.js",
+  "/auth/login": "pages/auth/login.js"
 }

@@ -24,7 +24,7 @@ import {
 } from '@/types';
 
 // API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
 
 // Create axios instance
 const createApiClient = (): AxiosInstance => {
@@ -128,24 +128,51 @@ const apiRequest = async <T>(
     return response.data;
   } catch (error: any) {
     console.error(`API ${method} ${url} error:`, error);
-    throw new Error(
-      error.response?.data?.message ||
-      error.message ||
-      'An unexpected error occurred'
-    );
+    // Re-throw the original error to preserve response data
+    throw error;
   }
 };
 
 // Auth API
 export const authApi = {
-  // Login
-  login: async (email: string, password: string): Promise<{ access_token: string; user: User }> => {
-    const response = await apiRequest<{ access_token: string; user: User }>('POST', '/auth/login', {
+  // Login (supports 2FA challenge response)
+  login: async (
+    email: string,
+    password: string
+  ): Promise<{ access_token: string; user: User } | { status: '2fa_required'; temp_token: string; message?: string }> => {
+    const response = await apiRequest<any>('POST', '/auth/login', {
       email,
       password,
     });
 
-    // Store token in cookies
+    // If backend indicates 2FA is required, return the challenge to caller
+    if (response && response.status === '2fa_required' && response.temp_token) {
+      return {
+        status: '2fa_required',
+        temp_token: response.temp_token,
+        message: response.message,
+      };
+    }
+
+    // Store token in cookies for normal login
+    if (typeof window !== 'undefined' && response?.access_token) {
+      Cookies.set('auth_token', response.access_token, { expires: 1 });
+    }
+
+    return response as { access_token: string; user: User };
+  },
+
+  // Verify 2FA code and complete login
+  verify2FA: async (
+    tempToken: string,
+    code: string
+  ): Promise<{ access_token: string; user: User }> => {
+    const response = await apiRequest<{ access_token: string; user: User }>(
+      'POST',
+      '/auth/verify-2fa',
+      { temp_token: tempToken, code }
+    );
+
     if (typeof window !== 'undefined' && response.access_token) {
       Cookies.set('auth_token', response.access_token, { expires: 1 });
     }
@@ -184,6 +211,35 @@ export const authApi = {
   // Get current user info
   getCurrentUser: (): Promise<User> =>
     apiRequest<User>('GET', '/auth/me'),
+};
+
+// Two-Factor Authentication API (authenticated)
+export const twoFactorApi = {
+  getStatus: async (): Promise<{ two_factor_enabled: boolean }> =>
+    apiRequest<{ two_factor_enabled: boolean }>('GET', '/auth/2fa/status'),
+
+  startSetup: async (): Promise<{ otpauth_uri: string; secret: string }> =>
+    apiRequest<{ otpauth_uri: string; secret: string }>('POST', '/auth/2fa/setup-start'),
+
+  // Fetch QR as blob (needs auth header) and return a local object URL for <img src>
+  getQrObjectUrl: async (): Promise<string> => {
+    const token = typeof window !== 'undefined' ? Cookies.get('auth_token') : undefined;
+    const url = `${API_BASE_URL}/auth/2fa/qr`;
+    const res = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!res.ok) {
+      throw new Error('Failed to load QR code');
+    }
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  },
+
+  enable: async (code: string): Promise<{ backup_codes: string[] }> =>
+    apiRequest<{ backup_codes: string[] }>('POST', '/auth/2fa/enable', { code }),
+
+  disable: async (code: string): Promise<void> =>
+    apiRequest<void>('POST', '/auth/2fa/disable', { code }),
 };
 
 // User API

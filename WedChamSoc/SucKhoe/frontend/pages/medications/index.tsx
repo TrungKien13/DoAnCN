@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { withAuth } from "@/lib/auth";
 import Layout from "@/components/Layout/Layout";
 import { medicationsApi } from "@/lib/api";
+import type { Medication as ApiMedication } from "@/types";
 import AddMedicationModal from "@/components/Medications/AddMedicationModal";
 import {
   PlusIcon,
@@ -10,17 +11,11 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 
-interface Medication {
-  id: number;
-  name: string;
-  dosage: string;
-  frequency: string;
-  instructions: string;
-  start_date: string;
-  end_date: string | null;
-  is_active: boolean;
-  created_at: string;
-}
+// Align with shared API type
+type Medication = ApiMedication & {
+  // adapt display name since API uses medication_name
+  name?: string;
+};
 
 const MedicationsPage: React.FC = () => {
   const [medications, setMedications] = useState<Medication[]>([]);
@@ -39,7 +34,12 @@ const MedicationsPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const data = await medicationsApi.getMedications(!showInactive);
-      setMedications(data);
+      // Map to include `name` for UI while preserving API shape
+      const mapped = data.map((m: ApiMedication) => ({
+        ...m,
+        name: (m as any).name || m.medication_name,
+      }));
+      setMedications(mapped);
     } catch (err: any) {
       console.error("Error loading medications:", err);
       setError("Không thể tải danh sách thuốc");
@@ -196,9 +196,11 @@ const MedicationsPage: React.FC = () => {
                       <div>
                         <p className="text-elderly-text-light">
                           <strong>Bắt đầu:</strong>{" "}
-                          {new Date(medication.start_date).toLocaleDateString(
-                            "vi-VN"
-                          )}
+                          {medication.start_date
+                            ? new Date(medication.start_date).toLocaleDateString(
+                                "vi-VN"
+                              )
+                            : "-"}
                         </p>
                         {medication.end_date && (
                           <p className="text-elderly-text-light">

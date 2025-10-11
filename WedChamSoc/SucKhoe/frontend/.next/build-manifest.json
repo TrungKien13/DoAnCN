@@ -32,10 +32,10 @@
       "static/chunks/main.js",
       "static/chunks/pages/auth/login.js"
     ],
-    "/health": [
+    "/settings": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/health.js"
+      "static/chunks/pages/settings.js"
     ]
   },
   "ampFirstPages": []

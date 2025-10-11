@@ -74,6 +74,7 @@ def get_database():
         db.rollback()
         raise
     finally:
+        # Only close the session, don't rollback unless there was an error
         db.close()
 
 def init_database():

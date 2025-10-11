@@ -2,18 +2,12 @@ import React, { useState, useEffect } from "react";
 import { withAuth } from "@/lib/auth";
 import Layout from "@/components/Layout/Layout";
 import { healthApi } from "@/lib/api";
+import type { HealthRecord as ApiHealthRecord } from "@/types";
 import { PlusIcon, ChartBarIcon, TrashIcon } from "@heroicons/react/24/outline";
 import AddHealthRecordModal from "@/components/Health/AddHealthRecordModal";
 
-interface HealthRecord {
-  id: number;
-  record_type: string;
-  value: string;
-  unit: string;
-  recorded_at: string;
-  display_value: string;
-  is_normal: boolean;
-}
+// Align with shared API type
+type HealthRecord = ApiHealthRecord;
 
 interface HealthStats {
   record_type: string;

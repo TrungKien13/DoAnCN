@@ -33,13 +33,20 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     email_verified = Column(Boolean, default=False)
     
-    # Relationships
-    health_profile = relationship("HealthProfile", back_populates="user", uselist=False)
-    health_records = relationship("HealthRecord", back_populates="user")
-    medications = relationship("Medication", back_populates="user")
-    schedules = relationship("Schedule", back_populates="user")
-    reminders = relationship("Reminder", back_populates="user")
-    chat_sessions = relationship("ChatSession", back_populates="user")
+    # Two-Factor Authentication (2FA)
+    two_factor_enabled = Column(Boolean, default=False)
+    # Base32 secret for TOTP (never expose via API). Nullable until user enables 2FA
+    two_factor_secret = Column(String(64), nullable=True)
+    # JSON-encoded list of hashed backup codes (bcrypt hashes), nullable
+    backup_codes_hashed = Column(Text, nullable=True)
+    
+    # Relationships - temporarily disabled to avoid import issues
+    # health_profile = relationship("HealthProfile", back_populates="user", uselist=False)
+    # health_records = relationship("HealthRecord", back_populates="user")
+    # medications = relationship("Medication", back_populates="user")
+    # schedules = relationship("Schedule", back_populates="user")
+    # reminders = relationship("Reminder", back_populates="user")
+    # chat_sessions = relationship("ChatSession", back_populates="user")
     # user_settings = relationship("UserSetting", back_populates="user")  # Temporarily disabled
     
     def __repr__(self):
@@ -60,7 +67,9 @@ class User(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "is_active": self.is_active,
-            "email_verified": self.email_verified
+            "email_verified": self.email_verified,
+            # Only expose whether 2FA is enabled; never expose secrets or backup codes
+            "two_factor_enabled": self.two_factor_enabled
         }
     
     @property
@@ -75,8 +84,13 @@ class User(Base):
     def get_full_profile(self):
         """Get user with health profile"""
         profile_data = self.to_dict()
-        if self.health_profile:
-            profile_data["health_profile"] = self.health_profile.to_dict()
+        # Check if health_profile relationship exists and is accessible
+        try:
+            if hasattr(self, 'health_profile') and self.health_profile:
+                profile_data["health_profile"] = self.health_profile.to_dict()
+        except AttributeError:
+            # Relationship not configured, skip health profile
+            pass
         return profile_data
 
 class UserSetting(Base):

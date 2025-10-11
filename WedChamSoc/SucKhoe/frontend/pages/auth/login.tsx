@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import Layout from "@/components/Layout/Layout";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { authApi } from "@/lib/api";
 import {
   UserIcon,
   LockClosedIcon,
@@ -12,6 +13,8 @@ import {
   ShieldCheckIcon,
   EyeIcon,
   EyeSlashIcon,
+  KeyIcon,
+  ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 
 const LoginPage: React.FC = () => {
@@ -21,6 +24,11 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // 2FA states
+  const [loginStep, setLoginStep] = useState<'password' | '2fa'>('password');
+  const [tempToken, setTempToken] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -28,7 +36,7 @@ const LoginPage: React.FC = () => {
     }
   }, [user, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -38,13 +46,51 @@ const LoginPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await login(email, password);
+      const result = await authApi.login(email, password);
+
+      // If 2FA is required, switch to 2FA step
+      if ((result as any).status === '2fa_required') {
+        const r = result as { status: '2fa_required'; temp_token: string };
+        setTempToken(r.temp_token);
+        setLoginStep('2fa');
+        toast.success("Vui lòng nhập mã xác thực 2 bước");
+        return;
+      }
+
+      // Normal login success
       toast.success("Đăng nhập thành công!");
+      router.push("/");
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.detail || error.message || "Đăng nhập thất bại");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handle2FASubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!twoFactorCode) {
+      toast.error("Vui lòng nhập mã xác thực");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const data = await authApi.verify2FA(tempToken, twoFactorCode);
+      toast.success("Đăng nhập thành công!");
+      router.push("/");
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || "Mã xác thực không đúng");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBackToPassword = () => {
+    setLoginStep('password');
+    setTempToken("");
+    setTwoFactorCode("");
   };
 
   if (isLoading) {
@@ -109,7 +155,8 @@ const LoginPage: React.FC = () => {
             </div>
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {loginStep === 'password' ? (
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
                 <label
                   htmlFor="email"
@@ -159,31 +206,110 @@ const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                ) : (
-                  <LockClosedIcon className="h-5 w-5 mr-2" />
-                )}
-                {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
-              </button>
-
-              <div className="text-center">
-                <span className="text-elderly-text-light">
-                  Chưa có tài khoản?{" "}
-                </span>
-                <Link
-                  href="/auth/register"
-                  className="font-medium text-primary-600 hover:text-primary-500"
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Đăng ký ngay
-                </Link>
-              </div>
-            </form>
+                  {isSubmitting ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                  ) : (
+                    <LockClosedIcon className="h-5 w-5 mr-2" />
+                  )}
+                  {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+                </button>
+
+                <div className="text-center">
+                  <span className="text-elderly-text-light">
+                    Chưa có tài khoản?{" "}
+                  </span>
+                  <Link
+                    href="/auth/register"
+                    className="font-medium text-primary-600 hover:text-primary-500"
+                  >
+                    Đăng ký ngay
+                  </Link>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handle2FASubmit} className="space-y-4">
+                {/* 2FA Header */}
+                <div className="text-center mb-6">
+                  <div className="flex justify-center mb-4">
+                    <KeyIcon className="h-12 w-12 text-primary-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-elderly-text">
+                    Xác thực 2 bước
+                  </h3>
+                  <p className="text-elderly-text-light mt-2">
+                    Vui lòng nhập mã 6 số từ ứng dụng xác thực của bạn
+                  </p>
+                </div>
+
+                {/* 2FA Code Input */}
+                <div>
+                  <label
+                    htmlFor="twoFactorCode"
+                    className="block text-sm font-medium text-elderly-text mb-2"
+                  >
+                    Mã xác thực
+                  </label>
+                  <input
+                    id="twoFactorCode"
+                    type="text"
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="form-input w-full text-center text-2xl tracking-widest"
+                    placeholder="000000"
+                    maxLength={6}
+                    required
+                  />
+                  <p className="text-sm text-elderly-text-light mt-2">
+                    Nhập mã 6 số từ Google Authenticator, Microsoft Authenticator hoặc ứng dụng tương tự
+                  </p>
+                </div>
+
+                {/* 2FA Buttons */}
+                <div className="space-y-3">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || twoFactorCode.length !== 6}
+                    className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                    ) : (
+                      <KeyIcon className="h-5 w-5 mr-2" />
+                    )}
+                    {isSubmitting ? "Đang xác thực..." : "Xác thực"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleBackToPassword}
+                    className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-lg font-medium text-elderly-text bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                  >
+                    <ArrowLeftIcon className="h-5 w-5 mr-2" />
+                    Quay lại đăng nhập
+                  </button>
+                </div>
+
+                {/* 2FA Help */}
+                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex">
+                    <ShieldCheckIcon className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-medium text-yellow-800">
+                        Không có mã xác thực?
+                      </h4>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        Nếu bạn đã lưu mã dự phòng (backup codes), bạn có thể sử dụng chúng thay thế cho mã 6 số.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            )}
 
             {/* Security Notice */}
             <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">

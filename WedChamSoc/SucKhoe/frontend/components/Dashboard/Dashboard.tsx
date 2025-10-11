@@ -21,7 +21,7 @@ interface DashboardStats {
 }
 
 interface TodayReminder {
-  id: number;
+  id: string;
   title: string;
   time: string;
   type: "medication" | "appointment" | "health";
@@ -80,7 +80,7 @@ const Dashboard: React.FC = () => {
 
       const reminders: TodayReminder[] = [
         ...todaySchedules.map((schedule: any) => ({
-          id: schedule.id,
+          id: `schedule-${schedule.id}`,
           title: schedule.title,
           time: new Date(schedule.scheduled_at).toLocaleTimeString("vi-VN", {
             hour: "2-digit",

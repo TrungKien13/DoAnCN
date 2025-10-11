@@ -14,7 +14,7 @@ import {
   EyeSlashIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
-import axios from "axios";
+import { authApi } from "@/lib/api";
 
 const RegisterPage: React.FC = () => {
   const { user, isLoading, register } = useAuth();
@@ -70,13 +70,11 @@ const RegisterPage: React.FC = () => {
         full_name: formData.full_name,
         phone: formData.phone,
       };
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`,
-        data
-      );
+      await authApi.register(data);
       toast.success("Đăng ký thành công!");
+      router.push("/auth/login");
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.detail || error.message || "Đăng ký thất bại");
     } finally {
       setIsSubmitting(false);
     }

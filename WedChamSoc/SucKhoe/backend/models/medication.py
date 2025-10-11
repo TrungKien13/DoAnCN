@@ -36,8 +36,8 @@ class Medication(Base):
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
     
-    # Relationships
-    user = relationship("User", back_populates="medications")
+    # Relationships - temporarily disabled to avoid import issues
+    # user = relationship("User", back_populates="medications")
     schedules = relationship("Schedule", back_populates="medication")
     
     def __repr__(self):
@@ -96,8 +96,8 @@ class Schedule(Base):
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
     
-    # Relationships
-    user = relationship("User", back_populates="schedules")
+    # Relationships - temporarily disabled to avoid import issues
+    # user = relationship("User", back_populates="schedules")
     medication = relationship("Medication", back_populates="schedules")
     reminders = relationship("Reminder", back_populates="schedule")
     
@@ -150,8 +150,8 @@ class Reminder(Base):
     is_read = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     
-    # Relationships
-    user = relationship("User", back_populates="reminders")
+    # Relationships - temporarily disabled to avoid import issues
+    # user = relationship("User", back_populates="reminders")
     schedule = relationship("Schedule", back_populates="reminders")
     
     def __repr__(self):

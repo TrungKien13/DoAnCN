@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
   const userNavigation = [
     { name: "Hồ sơ cá nhân", href: "/profile", icon: UserCircleIcon },
-    // { name: "Cài đặt", href: "/settings", icon: Cog6ToothIcon },
+    { name: "Cài đặt", href: "/settings", icon: Cog6ToothIcon },
   ];
 
   const handleLogout = () => {

@@ -66,12 +66,31 @@ const ProfilePage: React.FC = () => {
         chronic_diseases: profile.chronic_diseases,
         allergies: profile.allergies,
         current_medications: profile.current_medications,
-        emergency_contact: profile.emergency_contact,
+        medical_notes: profile.medical_notes,
+        doctor_name: profile.doctor_name,
+        doctor_phone: profile.doctor_phone,
         insurance_info: profile.insurance_info,
       });
-    } catch (err) {
-      console.error("Error loading health profile:", err);
-      // Health profile might not exist yet, that's ok
+    } catch (err: any) {
+      // Check if it's a 404 error (health profile doesn't exist yet)
+      if (err.response?.status === 404) {
+        // Health profile doesn't exist yet, that's normal for new users
+        setHealthProfile(null);
+        setHealthFormData({
+          height: undefined,
+          blood_type: "",
+          chronic_diseases: [],
+          allergies: [],
+          current_medications: [],
+          medical_notes: "",
+          doctor_name: "",
+          doctor_phone: "",
+          insurance_info: "",
+        });
+      } else {
+        // Other errors should be logged
+        console.error("Error loading health profile:", err);
+      }
     }
   };
 
@@ -325,11 +344,11 @@ const ProfilePage: React.FC = () => {
                   Bệnh mãn tính
                 </label>
                 <textarea
-                  value={healthFormData.chronic_diseases || ""}
+                  value={Array.isArray(healthFormData.chronic_diseases) ? healthFormData.chronic_diseases.join(', ') : (healthFormData.chronic_diseases || "")}
                   onChange={(e) =>
                     setHealthFormData({
                       ...healthFormData,
-                      chronic_diseases: e.target.value,
+                      chronic_diseases: e.target.value.split(',').map(item => item.trim()).filter(item => item),
                     })
                   }
                   className="input w-full h-20 resize-none"
@@ -342,11 +361,11 @@ const ProfilePage: React.FC = () => {
                   Dị ứng
                 </label>
                 <textarea
-                  value={healthFormData.allergies || ""}
+                  value={Array.isArray(healthFormData.allergies) ? healthFormData.allergies.join(', ') : (healthFormData.allergies || "")}
                   onChange={(e) =>
                     setHealthFormData({
                       ...healthFormData,
-                      allergies: e.target.value,
+                      allergies: e.target.value.split(',').map(item => item.trim()).filter(item => item),
                     })
                   }
                   className="input w-full h-20 resize-none"
@@ -359,11 +378,11 @@ const ProfilePage: React.FC = () => {
                   Thuốc đang sử dụng
                 </label>
                 <textarea
-                  value={healthFormData.current_medications || ""}
+                  value={Array.isArray(healthFormData.current_medications) ? healthFormData.current_medications.join(', ') : (healthFormData.current_medications || "")}
                   onChange={(e) =>
                     setHealthFormData({
                       ...healthFormData,
-                      current_medications: e.target.value,
+                      current_medications: e.target.value.split(',').map(item => item.trim()).filter(item => item),
                     })
                   }
                   className="input w-full h-20 resize-none"

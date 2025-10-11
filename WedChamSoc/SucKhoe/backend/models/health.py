@@ -45,8 +45,8 @@ class HealthProfile(Base):
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
     
-    # Relationships
-    user = relationship("User", back_populates="health_profile")
+    # Relationships - temporarily disabled to avoid import issues
+    # user = relationship("User", back_populates="health_profile")
     
     def __repr__(self):
         return f"<HealthProfile(user_id={self.user_id}, blood_type='{self.blood_type}')>"
@@ -100,8 +100,8 @@ class HealthRecord(Base):
     recorded_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     
-    # Relationships
-    user = relationship("User", back_populates="health_records")
+    # Relationships - temporarily disabled to avoid import issues
+    # user = relationship("User", back_populates="health_records")
     
     def __repr__(self):
         return f"<HealthRecord(user_id={self.user_id}, type='{self.record_type}', recorded_at='{self.recorded_at}')>"

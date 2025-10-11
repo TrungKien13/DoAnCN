@@ -19,7 +19,7 @@ const navigation = [
   { name: "Lịch hẹn", href: "/schedules", icon: CalendarIcon },
   { name: "Tư vấn AI", href: "/chat", icon: ChatBubbleLeftRightIcon },
   { name: "Hồ sơ", href: "/profile", icon: UserIcon },
-  // { name: 'Cài đặt', href: '/settings', icon: Cog6ToothIcon },
+  { name: "Cài đặt", href: "/settings", icon: Cog6ToothIcon },
 ];
 
 const Sidebar: React.FC = () => {

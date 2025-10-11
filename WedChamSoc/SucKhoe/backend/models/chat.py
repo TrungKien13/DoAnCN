@@ -24,8 +24,8 @@ class ChatSession(Base):
     ended_at = Column(TIMESTAMP, nullable=True)
     is_active = Column(Boolean, default=True)
     
-    # Relationships
-    user = relationship("User", back_populates="chat_sessions")
+    # Relationships - temporarily disabled to avoid import issues
+    # user = relationship("User", back_populates="chat_sessions")
     messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
     
     def __repr__(self):
@@ -48,15 +48,22 @@ class ChatSession(Base):
         self.ended_at = datetime.now()
         self.is_active = False
     
-    def get_messages_count(self):
+    def get_messages_count(self, db_session=None):
         """Get total number of messages in this session"""
-        return len(self.messages)
+        if db_session:
+            from models.chat import ChatMessage
+            return db_session.query(ChatMessage).filter(ChatMessage.session_id == self.id).count()
+        return 0  # Return 0 if no database session provided
     
-    def get_last_message(self):
+    def get_last_message(self, db_session=None):
         """Get the last message in this session"""
-        if self.messages:
-            return sorted(self.messages, key=lambda x: x.timestamp)[-1]
-        return None
+        if db_session:
+            from models.chat import ChatMessage
+            last_message = db_session.query(ChatMessage).filter(
+                ChatMessage.session_id == self.id
+            ).order_by(ChatMessage.timestamp.desc()).first()
+            return last_message
+        return None  # Return None if no database session provided
 
 class ChatMessage(Base):
     """

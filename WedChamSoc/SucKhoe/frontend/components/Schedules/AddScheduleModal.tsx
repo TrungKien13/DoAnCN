@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { schedulesApi } from "@/lib/api";
+import { ScheduleType } from "@/types";
 
 interface AddScheduleModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ const AddScheduleModal: React.FC<AddScheduleModalProps> = ({
         scheduled_datetime: scheduledDateTime,
         location: formData.location || undefined,
         doctor_name: formData.doctor_name || undefined,
-        schedule_type: "appointment", // Default to appointment type
+        schedule_type: "appointment" as ScheduleType, // Default to appointment type
         is_recurring: false,
         recurrence_pattern: undefined,
       };
